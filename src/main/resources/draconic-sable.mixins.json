@@ -1,0 +1,10 @@
+{
+  "required": true,
+  "package": "dev.draconicsable.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": ["BlastHoldMixin", "BlastMassMixin", "BlastRemovalMixin", "WorldExplosionMixin", "ReactorExplosionMixin", "ReactorPlacementMixin", "PedestalPlacementMixin", "HeatmapMixin", "AssemblyGatherMixin", "AssemblyMoveMixin", "PylonMixin", "EnergyStabilizerMixin", "EnergyCoreMixin", "StructureBlockMixin", "ReactorCoreMixin", "ReactorComponentMixin"],
+  "client": ["client.PedestalLabelMixin", "client.GrinderRendererMixin", "client.ChaosRendererMixin", "client.EnergyCoreRendererMixin", "client.DetectorAnimationMixin", "client.FusionBillboardMixin", "client.ReactorRendererMixin", "client.TransparentPassMixin", "client.CrystalBaseMixin", "client.CrystalBeamMixin", "client.CrystalWirelessMixin", "client.CrystalStaticFxMixin", "client.CrystalRendererMixin", "client.EnergyParticleMixin", "client.EnergyCoreParticleMixin"],
+  "injectors": {"defaultRequire": 1}
+}
+
+

@@ -1,0 +1,12 @@
+.gradle/
+.vscode/
+build/
+run*/
+audit/
+libs/
+test-libs/
+*.log
+client-thread.txt
+evidence/
+*.jfr
+hs_err_pid*.log

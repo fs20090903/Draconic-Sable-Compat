@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "draconicevolution:reactor_core", "draconicevolution:reactor_stabilizer", "draconicevolution:reactor_injector",
+    "draconicevolution:energy_core", "draconicevolution:energy_core_stabilizer", "draconicevolution:energy_pylon",
+    "draconicevolution:structure_block"
+  ]
+}

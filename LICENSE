@@ -1,0 +1,16 @@
+Draconic Sable Compatibility - mixed licensing
+
+Original contributions: Copyright (c) 2026 Draconic Sable Compatibility contributors.
+Original contributions are licensed under the MIT License (LICENSES/MIT.txt).
+
+Draconic Evolution-derived portions retain the upstream custom license in
+LICENSES/LicenseRef-Draconic-Evolution.txt, including its source-visibility
+requirement. Upstream copyright: (c) 2013-2023 brandon3055.
+
+These are separate scopes, not alternative licenses for the same upstream code.
+The MIT grant does not relicense upstream material or waive upstream conditions.
+See LICENSING.md for the file inventory and NOTICE for attribution.
+
+Gradle wrapper components in source distributions retain Apache License 2.0;
+see LICENSES/Apache-2.0.txt and their existing notices.
+External dependencies retain their own licenses and are not bundled.

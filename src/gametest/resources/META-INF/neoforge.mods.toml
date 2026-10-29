@@ -1,0 +1,7 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="Mixed: MIT (original tests); Draconic Evolution custom license (adapted reference scan). See LICENSING.md."
+[[mods]]
+modId="draconic_sable_tests"
+version="1"
+displayName="Draconic Sable Tests"

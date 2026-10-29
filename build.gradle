@@ -1,0 +1,125 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.148'
+}
+version = '0.1.6-licensing.1'
+group = 'dev.draconicsable'
+base { archivesName = 'draconic-sable-compat-1.21.1-neoforge' }
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+sourceSets { gametest { compileClasspath += sourceSets.main.output; runtimeClasspath += sourceSets.main.output } }
+configurations {
+    gametestImplementation.extendsFrom implementation
+    gametestCompileOnly.extendsFrom compileOnly
+    gametestRuntimeOnly.extendsFrom runtimeOnly
+}
+dependencies {
+    implementation fileTree(dir:'libs', include:'*.jar')
+    implementation files('../FlightRecorder_neoforge_1.21.1/libs/sable-2.0.5.jar', '../FlightRecorder_neoforge_1.21.1/libs/create-6.0.10.jar')
+    implementation files('../FlightRecorder_neoforge_1.21.1/libs/sable-companion-1.6.0.jar', '../FlightRecorder_neoforge_1.21.1/libs/ponder.jar')
+    if (providers.gradleProperty('sodiumSmoke').isPresent()) {
+        // Sodium's outer jar is a launcher service; using it as a dev mod makes
+        // JarJar select the outer metadata instead of its actual implementation.
+        gametestRuntimeOnly fileTree(dir:'test-libs',include:'*.jar',exclude:'sodium-*.jar')
+        gametestRuntimeOnly fileTree(dir:'test-libs/sodium-extracted',include:'*.jar',exclude:'net.caffeinemc.sodium-*.jar')
+    }
+}
+neoForge {
+    version = '21.1.259'
+    addModdingDependenciesTo(sourceSets.gametest)
+    mods {
+        draconic_sable_compat { sourceSet sourceSets.main }
+        draconic_sable_tests { sourceSet sourceSets.gametest }
+    }
+    runs {
+        gameTestServer {
+            type = 'gameTestServer'
+            sourceSet = sourceSets.gametest
+            loadedMods = [mods.draconic_sable_compat, mods.draconic_sable_tests]
+            systemProperty 'neoforge.enabledGameTestNamespaces', 'draconic_sable_tests'
+        }
+        pendingShutdownSmoke {
+            type = 'gameTestServer'
+            sourceSet = sourceSets.gametest
+            loadedMods = [mods.draconic_sable_compat, mods.draconic_sable_tests]
+            gameDirectory = file('run-pending-shutdown')
+            systemProperty 'neoforge.enabledGameTestNamespaces', 'draconic_shutdown_tests'
+        }
+        blastRemovalSmoke {
+            type = 'gameTestServer'
+            sourceSet = sourceSets.gametest
+            loadedMods = [mods.draconic_sable_compat, mods.draconic_sable_tests]
+            gameDirectory = file('run-blast-removal')
+            systemProperty 'neoforge.enabledGameTestNamespaces', 'draconic_removal_tests'
+        }
+        client { client(); gameDirectory = file('run-client') }
+        clientSmoke {
+            client()
+            sourceSet = sourceSets.gametest
+            loadedMods = [mods.draconic_sable_compat, mods.draconic_sable_tests]
+            gameDirectory = file(providers.gradleProperty('sodiumSmoke').isPresent() ? 'run-client-sodium' : 'run-client-smoke')
+            systemProperty 'draconicSable.clientSmoke', 'true'
+        }
+    }
+}
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('META-INF/neoforge.mods.toml') { expand version: project.version }
+}
+tasks.named('jar') {
+    from(files('LICENSE', 'NOTICE', 'LICENSING.md')) { into 'META-INF' }
+    from('LICENSES') { into 'META-INF/licenses' }
+}
+
+// Explicit allowlist: never publish local decompilations, dependencies or test saves.
+tasks.register('sourceDistribution', Zip) {
+    archiveBaseName = base.archivesName
+    archiveClassifier = 'source'
+    destinationDirectory = layout.buildDirectory.dir('distributions')
+    from('src') { into 'src' }
+    from('gradle/wrapper') { into 'gradle/wrapper' }
+    from('LICENSES') { into 'LICENSES' }
+    from('tools') { into 'tools' }
+    from('build.gradle', 'settings.gradle', 'gradle.properties', 'gradlew.bat',
+        '.gitignore', 'LICENSE', 'NOTICE', 'LICENSING.md', 'DISTRIBUTION.md', 'README.md',
+        'VALIDATION.md', 'PERFORMANCE.md')
+}
+tasks.register('generateTestStructure') {
+    def dest = layout.buildDirectory.file('generated/gametest/data/draconic_sable_tests/structure/empty.nbt')
+    outputs.file dest
+    doLast {
+        def f = dest.get().asFile; f.parentFile.mkdirs()
+        new DataOutputStream(new java.util.zip.GZIPOutputStream(new FileOutputStream(f))).withCloseable { d ->
+            d.writeByte(10); d.writeUTF('')
+            d.writeByte(3); d.writeUTF('DataVersion'); d.writeInt(3955)
+            d.writeByte(9); d.writeUTF('size'); d.writeByte(3); d.writeInt(3)
+            [16,16,16].each { d.writeInt(it) }
+            d.writeByte(9); d.writeUTF('palette'); d.writeByte(10); d.writeInt(1)
+            d.writeByte(8); d.writeUTF('Name'); d.writeUTF('minecraft:air'); d.writeByte(0)
+            ['blocks','entities'].each { d.writeByte(9); d.writeUTF(it); d.writeByte(10); d.writeInt(0) }
+            d.writeByte(0)
+        }
+    }
+}
+sourceSets.gametest.resources.srcDir layout.buildDirectory.dir('generated/gametest')
+tasks.named('processGametestResources') { dependsOn 'generateTestStructure' }
+tasks.named('runGameTestServer') {
+    doLast {
+        if (!(file('run/logs/latest.log').text =~ /All [1-9][0-9]* required tests passed/)) {
+            throw new GradleException('GameTests did not finish successfully')
+        }
+    }
+}
+
+tasks.named('runClientSmoke') {
+    doFirst { extensions.extraProperties.set('smokeStartedAt', System.currentTimeMillis()) }
+    doLast {
+        def runDir = providers.gradleProperty('sodiumSmoke').isPresent() ? 'run-client-sodium' : 'run-client-smoke'
+        def passed = file("${runDir}/client-smoke-passed.txt")
+        def audit = file("${runDir}/all-block-render-audit.csv")
+        if (!passed.exists() || passed.lastModified() < extensions.extraProperties.get('smokeStartedAt') ||
+            !passed.text.startsWith('PASS:') || !audit.exists() || audit.text.contains('ERROR')) {
+            throw new GradleException('Client smoke did not complete its scene and renderer checks')
+        }
+    }
+}

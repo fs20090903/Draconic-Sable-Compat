@@ -1,0 +1,19 @@
+Draconic Sable Compatibility
+Copyright (c) 2026 Draconic Sable Compatibility contributors
+
+This is an independent compatibility addon, not an official upstream release.
+Original contributions are offered under MIT. Draconic Evolution-derived
+portions retain the upstream custom "Don't Be a Jerk" license.
+
+Draconic Evolution
+Copyright (c) 2013-2023 brandon3055
+https://github.com/Draconic-Inc/Draconic-Evolution
+
+Adapted material includes reactor blast traversal, power/resistance and damage
+rules, and reactor component discovery. See LICENSING.md for the file inventory,
+modifications, license provenance, and applicable license texts. Original authors
+retain their rights; no endorsement or ownership of their work is claimed.
+
+The Gradle wrapper in the source distribution is Apache-2.0-licensed build tooling
+and retains its own copyright notices. External mod dependencies, Minecraft code,
+local audit decompilations, and third-party art/sounds are not part of this grant.

@@ -1,0 +1,4 @@
+pluginManagement { repositories { gradlePluginPortal() } }
+// Keep the publication ignore rules in the explicitly allowlisted source ZIP.
+org.apache.tools.ant.DirectoryScanner.removeDefaultExclude('**/.gitignore')
+rootProject.name = 'DraconicSableCompat'
