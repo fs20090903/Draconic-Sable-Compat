@@ -42,8 +42,10 @@ Supply the dependencies listed in [DISTRIBUTION.md](DISTRIBUTION.md), then run:
 
 Tests create disposable `run*` directories. Start with fresh test worlds when
 comparing fixtures. Client checks are `runClientSmoke` and
-`runClientSmoke -PsodiumSmoke`; the latter requires the additional test JARs
-described in README and `tools/Prepare-SodiumSmoke.ps1`.
+`runClientSmoke -PsodiumSmoke`. The Sodium check requires Sodium 0.8.13, Iris
+1.8.14-beta.1 and ImmediatelyFast 1.6.15 in `test-libs`. Run
+`tools/Prepare-SodiumSmoke.ps1` to prepare Sodium for the development harness;
+its combined JAR is test-only and must not be installed in a modpack.
 
 ## Limits
 
