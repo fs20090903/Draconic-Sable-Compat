@@ -23,15 +23,18 @@ work on Sable moving structures (sublevels).
 - **Reactor explosions:** uses the reactor's world position to damage terrain and
   loaded nearby sublevels. Preparation runs during the safety countdown, with
   cached, incremental calculations and batched removal. Affected structures are
-  temporarily held steady while their blocks are removed.
+  temporarily held steady while their blocks are removed. Simultaneous blasts
+  take turns within the shared work budget to prevent starvation.
 - **Performance:** isolates reactor, Energy Core and crystal rendering buffers to
   avoid repeatedly flushing the shared scene, and reduces repeated loading and
   explosion work.
 
 ## Installation
 
-Targets **Minecraft 1.21.1**, **NeoForge 21.1.259**, **Draconic Evolution 3.1.4.633**,
-**BrandonsCore 3.2.1.309** and **Sable 2.0.5**.
+Requires **Minecraft 1.21.1**, **Java 21**, **NeoForge 21.1.228–21.1.265**,
+**Draconic Evolution 3.1.3.620–3.1.4.633**, **BrandonsCore 3.2.1.307–3.2.1.309**
+and **Sable 2.0.4–2.0.6**. Keep DE's required CodeChickenLib dependency;
+versions **4.6.1.524, 4.6.1.526 and 4.6.1.529** were checked.
 
 Place the compatibility JAR in `mods` on **the server and every client**, replacing
 any older copy, then restart. Keep the original mods and their required dependencies.

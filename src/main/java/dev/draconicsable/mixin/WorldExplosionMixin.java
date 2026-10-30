@@ -34,7 +34,7 @@ public abstract class WorldExplosionMixin implements BlastPlan {
     @Override public int draconicSable$terrainTickets(){return draconicSable$trace==null?0:draconicSable$trace.heldChunks();}
     @Override public BlastTrace draconicSable$takeTerrain(){var t=draconicSable$trace!=null?draconicSable$trace:draconicSable$previousTerrain;draconicSable$trace=null;draconicSable$previousTerrain=null;return t;}
     @Override public void draconicSable$reuseTerrain(BlastTrace previous){draconicSable$previousTerrain=previous;}
-    @Override public void draconicSable$discard(){if(draconicSable$blast!=null){draconicSable$blast.close();draconicSable$blast=null;}if(draconicSable$trace!=null){draconicSable$trace.clear();draconicSable$trace=null;}if(draconicSable$previousTerrain!=null){draconicSable$previousTerrain.clear();draconicSable$previousTerrain=null;}}
+    @Override public void draconicSable$discard(){BlastBudget.forget(level,this);if(draconicSable$blast!=null){draconicSable$blast.close();draconicSable$blast=null;}if(draconicSable$trace!=null){draconicSable$trace.clear();draconicSable$trace=null;}if(draconicSable$previousTerrain!=null){draconicSable$previousTerrain.clear();draconicSable$previousTerrain=null;}}
 
     @Inject(method="<init>",at=@At("RETURN"))
     private void draconicSable$worldOrigin(BlockPos anchor,int radius,ServerLevel level,int delay,CallbackInfo ci) {
@@ -45,7 +45,7 @@ public abstract class WorldExplosionMixin implements BlastPlan {
     private void draconicSable$capture(CallbackInfo ci) {
         ci.cancel();
         if(calculationComplete)return;
-        try(var budget=new BlastBudget(level)) {
+        try(var budget=new BlastBudget(level,this)) {
             if(System.nanoTime()>=budget.deadline)return;
             draconicSable$prepare();
             if(!draconicSable$blast.capture(budget.deadline))return;
@@ -54,11 +54,12 @@ public abstract class WorldExplosionMixin implements BlastPlan {
             calculationComplete=draconicSable$rings.step((ProcessExplosion)(Object)this,level,draconicSable$trace,budget.deadline);
             draconicSable$blast.reportProgress(radius,calculationComplete);
             if(calculationComplete) {
+                BlastBudget.forget(level,this);
                 draconicSable$trace.releasePrevious();
                 com.mojang.logging.LogUtils.getLogger().info("[DE blast solver] radius={} visited={} skippedAir={} chunkLookups={}",maxRadius,
                     draconicSable$trace.visited,draconicSable$trace.skippedAir,draconicSable$trace.chunkLookups);
             }
-        }
+        }catch(RuntimeException|Error e){BlastBudget.forget(level,this);throw e;}
     }
     @WrapOperation(method="trace",at=@At(value="INVOKE",target="Lnet/minecraft/core/BlockPos;asLong(III)J"))
     private long draconicSable$floorNegativeCoordinates(int x,int y,int z,Operation<Long> original,@Local(argsOnly=true) Vector3 ray) {

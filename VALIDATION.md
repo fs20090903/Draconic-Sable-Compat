@@ -2,6 +2,51 @@
 
 ## Recorded release checks
 
+### 0.1.7
+
+The standalone `fairBudgetTest` suite uses deterministic elapsed times to check
+fixed caller order, repeated requests, uninterruptible budget overruns, mixed
+preparation/removal, cancellation, abandoned jobs and independent queues.
+
+The main server suite now has 25 checks. Its new concurrent fixture starts eight
+maximum-radius (350) blasts on separate sublevels, requires early progress from
+every plan, then checks actual block removal and temporary-ticket/hold cleanup.
+Existing explosion latency fixtures use separate named batches with their
+original assertions and timeouts; they no longer compete with unrelated cold
+terrain generation. Separate live-physics removal and pending-shutdown checks
+bring the server total to 27.
+
+The release passed all 27 server checks on both dependency endpoints:
+
+| Component | Lower endpoint | Upper endpoint |
+| --- | --- | --- |
+| NeoForge | 21.1.228 | 21.1.265 |
+| Sable | 2.0.4 | 2.0.6 |
+| Draconic Evolution | 3.1.3.620 | 3.1.4.633 |
+| Brandon's Core | 3.2.1.307 | 3.2.1.309 |
+| CodeChickenLib | 4.6.1.524 | 4.6.1.529 |
+
+Both endpoint client runs passed assembly synchronization, reactor/crystal
+geometry and bounds, actual crystal-to-pylon-to-core energy transfer, all 51
+block-catalogue terrain/sublevel render comparisons, and buffer isolation.
+These runs used vanilla rendering with no shader packs, Sodium or Iris.
+The current-pack combination (NeoForge 21.1.259, Sable 2.0.5, DE 3.1.4.633,
+Brandon's Core 3.2.1.309 and CodeChickenLib 4.6.1.529) also passed all 27 server
+checks with the new release.
+An additional audit run restored the original 24-test overlapping arrangement
+on the upper endpoint, followed by the dedicated concurrent fixture. All 25
+checks passed without relaxing the original assertions or timeouts. The previous
+release had failed six timing checks in that overlapping arrangement on Sable
+2.0.6. This supports the scheduling fix; it is not a full-pack latency guarantee.
+
+The wider dependency audit examined the released DE, Brandon's Core,
+CodeChickenLib and Sable versions in README.md. Sable 2.0.3 and older lack APIs
+used by this implementation. DE 3.1.3.618 was excluded because its own particle
+registration crashes on dedicated servers; 3.1.3.620 fixes that startup problem.
+Intermediate dependency combinations were API-checked, not all play-tested.
+
+### Earlier release evidence
+
 Gameplay release 0.1.6 passed 26 server checks: the 24-test main suite, a separate
 live-physics removal test, and an interrupted-shutdown test. All three isolated
 servers saved and exited. These were disposable worlds, not existing user saves.

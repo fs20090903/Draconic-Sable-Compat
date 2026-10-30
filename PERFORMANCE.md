@@ -11,11 +11,20 @@ This addresses a measured call-path problem, but no controlled full-modpack FPS
 improvement is claimed. Shader packs, other renderers and moving-body physics
 can still dominate frame time. Tests using Sodium and Iris had shaders disabled.
 
-## Reactor explosions (0.1.6)
+## Reactor explosions
 
 - Preparation uses resumable annulus scans, iterative vertical rays, cached
   terrain and empty-space skipping. It overlaps DE's safety countdown.
 - Preparation uses a cooperative 2 ms slice and 6 ms per-level/tick ceiling.
+- Preparation and sublevel removal share an owner-based round-robin admission
+  queue. A process receives at most one slice per tick; the next waiting owner
+  keeps its turn when the budget runs out. This also prevents repeated long
+  calls or removal jobs from permanently starving later preparation jobs.
+  Completed/cancelled jobs leave immediately; abandoned jobs expire after a
+  missed request tick. Weak owner references avoid retaining discarded worlds.
+  Queue admission can leave part of a tick's budget unused when its next owner
+  already had its callback earlier that tick. Fairness takes priority over
+  filling that unused time. The existing time ceilings are unchanged.
 - Sublevel removal shares a 12 ms per-level/tick allowance across blast work,
   with an 8,192-entry ceiling. These are soft limits: chunk operations, block
   callbacks and final mass flushes cannot be preempted.

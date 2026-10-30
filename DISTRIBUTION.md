@@ -50,5 +50,6 @@ Existing server checks can be run in disposable worlds with:
 ```
 
 Client/Sodium smoke tests require additional local test dependencies not included
-in the source archive. This licensing-only revision changes notices, headers,
-packaging and version metadata; it does not change gameplay logic.
+in the source archive. `build` also runs the deterministic `fairBudgetTest` suite.
+Build dependencies above remain pinned for reproducibility; the runtime accepts
+the wider checked versions listed in README.md.

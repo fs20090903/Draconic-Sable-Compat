@@ -181,7 +181,7 @@ public final class WorldBlast implements AutoCloseable {
             @Override public void updateProcess(){
                 if(closed)return;
                 long started=System.nanoTime();int blocks=0;
-                try(var budget=BlastBudget.removal(level);var mass=new BlastMassBatch()) {
+                try(var budget=BlastBudget.removal(level,WorldBlast.this);var mass=new BlastMassBatch()) {
                     while(removalCursor<destroyed.size() && blocks<MAX_REMOVALS_PER_SLICE && System.nanoTime()<budget.deadline) {
                         blocks++;
                         var voxel=destroyed.get(removalCursor++);
@@ -208,6 +208,7 @@ public final class WorldBlast implements AutoCloseable {
 
     @Override public void close() {
         if(closed)return;closed=true;
+        BlastBudget.forget(level,this);
         ACTIVE.remove(this);
         if(hold!=null){hold.close();hold=null;}
         if(applying)LOG.info("[DE blast {}] removal ended ticks={} cap={} budgetMs={} slices={} timeLimited={} capLimited={} maxBatch={} workMs={} maxSliceMs={}",

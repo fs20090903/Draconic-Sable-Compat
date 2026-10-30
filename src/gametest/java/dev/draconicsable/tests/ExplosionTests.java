@@ -28,6 +28,28 @@ import java.util.*;
 @GameTestHolder("draconic_sable_tests") @PrefixGameTestTemplate(false)
 public class ExplosionTests {
     private static int fixtures;
+    @GameTest(batch="concurrentBlasts",template="empty",timeoutTicks=1200)
+    public void simultaneousBlastsAllProgressAndRemoveBlocks(GameTestHelper h) {
+        var bodies=new ArrayList<ServerSubLevel>();
+        var blasts=new ArrayList<ProcessExplosion>();
+        var stones=new ArrayList<BlockPos>();
+        for(int i=0;i<8;i++) {
+            var b=body(h,new Vec3(-12000.5-i*800,500.5,-12000.5));
+            var stone=b.getPlot().getCenterBlock().east();
+            h.getLevel().setBlockAndUpdate(stone,Blocks.STONE.defaultBlockState());
+            b.getPlot().updateBoundingBox();b.updateBoundingBox();
+            var blast=new ProcessExplosion(b.getPlot().getCenterBlock(),350,h.getLevel(),-1);
+            blast.lava=false;blast.enableEffect=false;
+            bodies.add(b);stones.add(stone);blasts.add(blast);drive(blast);
+        }
+        h.startSequence().thenIdle(100).thenExecute(()->{
+            for(int i=0;i<blasts.size();i++)h.assertTrue(blasts.get(i).radius>1 || blasts.get(i).isCalculationComplete(),"Concurrent blast "+i+" makes early progress in fixed caller order");
+        }).thenWaitUntil(()->h.assertTrue(blasts.stream().allMatch(ProcessExplosion::isCalculationComplete),"All eight simultaneous maximum-radius plans finish"))
+          .thenExecute(()->blasts.forEach(ProcessExplosion::detonate))
+          .thenWaitUntil(()->{
+              for(int i=0;i<blasts.size();i++)h.assertTrue(h.getLevel().getBlockState(stones.get(i)).isAir() && !WorldBlast.removing(bodies.get(i)) && ((BlastPlan)blasts.get(i)).draconicSable$terrainTickets()==0,"Concurrent blast "+i+" completes removal and releases temporary ownership");
+          }).thenExecute(()->bodies.forEach(b->cleanup(h,b))).thenSucceed();
+    }
     private static ServerSubLevel body(GameTestHelper h,Vec3 world) {
         BlockPos p=h.absolutePos(new BlockPos(5,6,5));
         h.getLevel().setBlockAndUpdate(p,Blocks.BEDROCK.defaultBlockState());
@@ -52,7 +74,7 @@ public class ExplosionTests {
         public void updateProcess(){if(!p.isCalculationComplete())p.updateCalculation();}
         public boolean isDead(){return p.isCalculationComplete();}
     });}
-    @GameTest(template="empty",timeoutTicks=400)
+    @GameTest(batch="annulusMatchesOriginalOrderAndSlices",template="empty",timeoutTicks=400)
     public void annulusMatchesOriginalOrderAndSlices(GameTestHelper h) {
         for(int r:List.of(1,2,3,4,5,8,16,31,64,127,350)) {
             var p=new ProcessExplosion(BlockPos.ZERO,r+1,h.getLevel(),-1);p.radius=r;p.meanResistance=100;
@@ -68,7 +90,7 @@ public class ExplosionTests {
         }
         h.succeed();
     }
-    @GameTest(template="empty",timeoutTicks=400)
+    @GameTest(batch="terrainExplosionActuallyDamagesRotatedBody",template="empty",timeoutTicks=400)
     public void terrainExplosionActuallyDamagesRotatedBody(GameTestHelper h) {
         var world=new Vec3(-3000.5,150.5,-3000.5);var b=body(h,world);var l=h.getLevel();
         var p=b.getPlot().getCenterBlock();
@@ -92,7 +114,7 @@ public class ExplosionTests {
                 cleanup(h,b);
             }).thenSucceed();
     }
-    @GameTest(template="empty",timeoutTicks=400)
+    @GameTest(batch="optimizedTraceMatchesOriginalBlocksResistanceAndRandom",template="empty",timeoutTicks=400)
     public void optimizedTraceMatchesOriginalBlocksResistanceAndRandom(GameTestHelper h) throws Exception {
         var level=h.getLevel();int x=-5201,z=-5201;
         for(int y=75;y<165;y++) {
@@ -131,7 +153,7 @@ public class ExplosionTests {
         }
         h.assertTrue(cases==64,"64 reference comparisons");h.succeed();
     }
-    @GameTest(template="empty",timeoutTicks=400)
+    @GameTest(batch="fullRadiusSparseBlastCompletesWithoutRingPerTickDelay",template="empty",timeoutTicks=400)
     public void fullRadiusSparseBlastCompletesWithoutRingPerTickDelay(GameTestHelper h) {
         var l=h.getLevel();var world=new Vec3(-5800.5,500.5,-5800.5);var b=body(h,world);var p=b.getPlot().getCenterBlock();
         l.setBlockAndUpdate(p.east(),Blocks.STONE.defaultBlockState());b.getPlot().updateBoundingBox();b.updateBoundingBox();
@@ -147,7 +169,7 @@ public class ExplosionTests {
                 h.assertTrue(l.getBlockState(p.east()).isAir(),"Full-radius sublevel damage actually applied");cleanup(h,b);
             }).thenSucceed();
     }
-    @GameTest(template="empty",timeoutTicks=2800)
+    @GameTest(batch="fullRadiusColdTerrainAndWarmReuse",template="empty",timeoutTicks=2800)
     public void fullRadiusColdTerrainAndWarmReuse(GameTestHelper h) {
         var l=h.getLevel();var center=new BlockPos(-7000,-20,-7000);
         l.setBlock(center.below(8),Blocks.STONE.defaultBlockState(),2);
@@ -176,7 +198,7 @@ public class ExplosionTests {
                 h.assertTrue(((BlastPlan)warm[0]).draconicSable$terrainTickets()==0,"Cancelled warm plan releases transferred tickets");
             }).thenSucceed();
     }
-    @GameTest(template="empty",timeoutTicks=500)
+    @GameTest(batch="realReactorRemainsUntilReplacementPlanDetonates",template="empty",timeoutTicks=500)
     public void realReactorRemainsUntilReplacementPlanDetonates(GameTestHelper h) throws Exception {
         var l=h.getLevel();var b=body(h,new Vec3(-4400.5,150.5,-4400.5));var p=b.getPlot().getCenterBlock().above();
         l.setBlockAndUpdate(p,com.brandon3055.draconicevolution.init.DEContent.REACTOR_CORE.get().defaultBlockState());
@@ -202,7 +224,7 @@ public class ExplosionTests {
             .thenWaitUntil(()->h.assertTrue(!WorldBlast.removing(b),"Queued body removal finished"))
             .thenExecute(()->{h.assertTrue(l.getBlockState(p).isAir(),"Core removed with actual detonation");cleanup(h,b);}).thenSucceed();
     }
-    @GameTest(template="empty",timeoutTicks=500)
+    @GameTest(batch="movingReactorRefreshesBeforeDetonationAndReusesPreparedPlan",template="empty",timeoutTicks=500)
     public void movingReactorRefreshesBeforeDetonationAndReusesPreparedPlan(GameTestHelper h) {
         Vec3 start=new Vec3(-3200.5,150.5,-3200.5),end=new Vec3(-3240.5,150.5,-3200.5);
         var b=body(h,start);var l=h.getLevel();var p=b.getPlot().getCenterBlock();
@@ -228,7 +250,7 @@ public class ExplosionTests {
                 h.assertTrue(l.getBlockState(p.east()).isAir(),"Source sublevel receives damage too");cleanup(h,b);
             }).thenSucceed();
     }
-    @GameTest(template="empty",timeoutTicks=500)
+    @GameTest(batch="lastMomentMovementUsesNewWorldFrameAndHitsNearbyBody",template="empty",timeoutTicks=500)
     public void lastMomentMovementUsesNewWorldFrameAndHitsNearbyBody(GameTestHelper h) {
         Vec3 start=new Vec3(-3400.5,150.5,-3400.5),end=new Vec3(-3440.5,150.5,-3400.5);
         var b=body(h,start);var nearby=body(h,end.add(3,0,0));var l=h.getLevel();
@@ -251,7 +273,7 @@ public class ExplosionTests {
                 cleanup(h,b);cleanup(h,nearby);
             }).thenSucceed();
     }
-    @GameTest(template="empty",timeoutTicks=400)
+    @GameTest(batch="sublevelAboveTerrainBuildHeightStillReceivesBlast",template="empty",timeoutTicks=400)
     public void sublevelAboveTerrainBuildHeightStillReceivesBlast(GameTestHelper h) {
         var world=new Vec3(-3600.5,500.5,-3600.5);var b=body(h,world);var l=h.getLevel();var p=b.getPlot().getCenterBlock();
         l.setBlockAndUpdate(p.east(),Blocks.STONE.defaultBlockState());b.getPlot().updateBoundingBox();b.updateBoundingBox();
@@ -262,7 +284,7 @@ public class ExplosionTests {
                 h.assertTrue(l.getBlockState(p.east()).isAir(),"Body block above terrain build height removed");cleanup(h,b);
             }).thenSucceed();
     }
-    @GameTest(template="empty",timeoutTicks=400)
+    @GameTest(batch="realCriticalReactorPreparesAndCancelsWhenRemoved",template="empty",timeoutTicks=400)
     public void realCriticalReactorPreparesAndCancelsWhenRemoved(GameTestHelper h) throws Exception {
         var b=body(h,new Vec3(-3800.5,150.5,-3800.5));var l=h.getLevel();var p=b.getPlot().getCenterBlock().above();
         l.setBlockAndUpdate(p,com.brandon3055.draconicevolution.init.DEContent.REACTOR_CORE.get().defaultBlockState());
@@ -282,7 +304,7 @@ public class ExplosionTests {
                 h.assertTrue(tickets==null || tickets.stream().noneMatch(t->t.type()==WorldBlast.TICKET),"Cancelled plan releases tickets");cleanup(h,b);
             }).thenSucceed();
     }
-    @GameTest(template="empty")
+    @GameTest(batch="smallReactorBlastAndDebrisUseWorldCoordinates",template="empty")
     public void smallReactorBlastAndDebrisUseWorldCoordinates(GameTestHelper h) throws Exception {
         var world=new Vec3(-4000.5,150.5,-4000.5);var b=body(h,world);var l=h.getLevel();var p=b.getPlot().getCenterBlock().above();
         try {
