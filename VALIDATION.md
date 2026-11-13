@@ -1,3 +1,17 @@
+# 0.1.9 NeoForge update - 2026-11-13
+
+- Latest Minecraft 1.21.1 loader verified against NeoForge Maven metadata: **21.1.266**.
+- Runtime dependency is **[21.1.228,)** with no upper NeoForge cap. Minecraft remains exactly 1.21.1. Other dependency ranges are unchanged.
+- Default reproducible build target is 21.1.266; `-PneoVersion=...` supports testing another version.
+- All 61 runtime class files are byte-identical to the existing 0.1.8 JAR. No gameplay implementation changes were required; the existing loading-radius API is preserved.
+- Build, deterministic fair-budget checks, and all **25 dedicated GameTests passed** on 21.1.266 with Sable 2.0.5, Create 6.0.10, DE 3.1.4.633, BrandonsCore 3.2.1.309, and CCL 4.6.1.529.
+- The original small-blast test failed on both 21.1.266 and 21.1.259 because it relied on immediate spatial lookup in a remote chunk. It now captures this invocation's native entity-join events and checks at least 25 distinct debris entities are actually added, not removed, and at the expected world coordinates. The listener and spawned debris are cleaned up in finally. Prior debris cannot satisfy the test.
+- Integrated client smoke passed on 21.1.266: assembly synchronization, transformed reactor/crystal rendering, real crystal-to-pylon-to-Energy-Core transfer, all 51 block-render catalogue rows, and private-buffer isolation. Reactor and Energy Core screenshots were inspected. The client saved all dimensions and exited normally; Gradle reports BUILD SUCCESSFUL. Sodium/Iris were not installed for this run.
+- No full-pack or live multiplayer validation, and no installation/publication, was performed. An uncapped loader declaration does not certify future loader versions.
+- Local run evidence: `evidence/neoforge-0.1.9/` (excluded from distribution).
+
+---
+
 # Validation
 
 ## Recorded release checks

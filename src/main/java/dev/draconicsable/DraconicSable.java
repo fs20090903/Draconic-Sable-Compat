@@ -5,6 +5,7 @@ import net.neoforged.fml.common.Mod;
 @Mod("draconic_sable_compat")
 public final class DraconicSable {
     public DraconicSable(net.neoforged.bus.api.IEventBus bus) {
+        bus.addListener(dev.draconicsable.api.CoreLoadingRadii::process);
         // Register Sable's persistent codec before a world can load its saved ticket table.
         CoreLoading.SUBLEVEL.name();
         dev.draconicsable.explosion.WorldBlast.TICKET.name();

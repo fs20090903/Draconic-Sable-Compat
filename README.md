@@ -31,10 +31,13 @@ work on Sable moving structures (sublevels).
 
 ## Installation
 
-Requires **Minecraft 1.21.1**, **Java 21**, **NeoForge 21.1.228–21.1.265**,
+Requires **Minecraft 1.21.1**, **Java 21**, **NeoForge 21.1.228 or newer**,
 **Draconic Evolution 3.1.3.620–3.1.4.633**, **BrandonsCore 3.2.1.307–3.2.1.309**
 and **Sable 2.0.4–2.0.6**. Keep DE's required CodeChickenLib dependency;
 versions **4.6.1.524, 4.6.1.526 and 4.6.1.529** were checked.
+
+The NeoForge dependency has no upper version limit. Minecraft remains 1.21.1;
+see [validation](VALIDATION.md) for the loader versions actually tested.
 
 Place the compatibility JAR in `mods` on **the server and every client**, replacing
 any older copy, then restart. Keep the original mods and their required dependencies.
@@ -57,6 +60,7 @@ save the world so the addon's loading tickets are released.
 
 See [build instructions](DISTRIBUTION.md), [tests](VALIDATION.md), and
 [performance details](PERFORMANCE.md).
+Addon authors can use the [loading radius API](LOADING_API.md) to extend ordinary-world coverage without mixins.
 
 Original contributions are **MIT licensed**. DE-derived portions retain
 **Draconic Evolution's custom license**. See [LICENSING.md](LICENSING.md) and

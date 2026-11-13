@@ -20,7 +20,7 @@ public final class CoreLoading {
     public static final SubLevelLoadingTicketType<BlockPos> SUBLEVEL = SubLevelLoadingTicketType.create(
         ResourceLocation.fromNamespaceAndPath("draconic_sable_compat","active_core"),BlockPos.CODEC);
     private static final Map<ServerLevel,Map<BlockPos,Set<Long>>> WORLD_OWNERS=new WeakHashMap<>();
-    private record Binding(BlockPos pos,UUID body,boolean active) {}
+    private record Binding(BlockPos pos,UUID body,boolean active,int radius) {}
     private static final Map<BlockEntity,Binding> BINDINGS=new WeakHashMap<>();
     public static final TicketController WORLD=new TicketController(
         ResourceLocation.fromNamespaceAndPath("draconic_sable_compat","active_core"), (level,helper)-> {
@@ -42,9 +42,10 @@ public final class CoreLoading {
         var body=Sable.HELPER.getContaining(tile);
         var pos=tile.getBlockPos();
         var id=body==null?null:body.getUniqueId();
+        int radius=active && body==null ? dev.draconicsable.api.CoreLoadingRadii.radius(tile) : 0;
         var oldBinding=BINDINGS.get(tile);
-        if(oldBinding!=null && oldBinding.active()==active && oldBinding.pos().equals(pos) && Objects.equals(oldBinding.body(),id))return;
-        BINDINGS.put(tile,new Binding(pos.immutable(),id,active));
+        if(oldBinding!=null && oldBinding.active()==active && oldBinding.radius()==radius && oldBinding.pos().equals(pos) && Objects.equals(oldBinding.body(),id))return;
+        BINDINGS.put(tile,new Binding(pos.immutable(),id,active,radius));
         if(body instanceof ServerSubLevel serverBody) {
             var c=SubLevelContainer.getContainer(level);
             if(active) c.addForceLoadTicket(serverBody,SUBLEVEL,pos);
@@ -56,7 +57,7 @@ public final class CoreLoading {
         if(active) {
             // Reactor: full surrounding 3x3, including short injector/flux-gate feeds.
             // Energy core: 5x5 covers its shell, stabilizers and ordinary nearby pylons.
-            int radius=tile instanceof TileReactorCore?1:2;
+            // Addons can request a larger minimum through the startup IMC API.
             int cx=pos.getX()>>4,cz=pos.getZ()>>4;
             for(int x=cx-radius;x<=cx+radius;x++) for(int z=cz-radius;z<=cz+radius;z++) desired.add(ChunkPos.asLong(x,z));
         }

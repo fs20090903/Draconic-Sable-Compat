@@ -307,19 +307,30 @@ public class ExplosionTests {
     @GameTest(batch="smallReactorBlastAndDebrisUseWorldCoordinates",template="empty")
     public void smallReactorBlastAndDebrisUseWorldCoordinates(GameTestHelper h) throws Exception {
         var world=new Vec3(-4000.5,150.5,-4000.5);var b=body(h,world);var l=h.getLevel();var p=b.getPlot().getCenterBlock().above();
+        var debris=new java.util.HashSet<net.minecraft.world.entity.item.FallingBlockEntity>();
+        // Observe this invocation's real spawns rather than relying on same-tick spatial
+        // indexing in a remote chunk. Existing debris cannot satisfy this regression.
+        java.util.function.Consumer<net.neoforged.neoforge.event.entity.EntityJoinLevelEvent> listener=event->{
+            if(event.getLevel()==l && event.getEntity() instanceof net.minecraft.world.entity.item.FallingBlockEntity e)debris.add(e);
+        };
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(listener);
         try {
             l.setBlockAndUpdate(p,com.brandon3055.draconicevolution.init.DEContent.REACTOR_CORE.get().defaultBlockState());
             var core=(com.brandon3055.draconicevolution.blocks.reactor.tileentity.TileReactorCore)l.getBlockEntity(p);
             var boom=core.getClass().getDeclaredMethod("minimalBoom");boom.setAccessible(true);boom.invoke(core);
-            var debris=l.getEntitiesOfClass(net.minecraft.world.entity.item.FallingBlockEntity.class,new net.minecraft.world.phys.AABB(world,world).inflate(10));
-            h.assertTrue(debris.size()>=25,"Small blast spawns lava debris at actual world position");
+            var bounds=new net.minecraft.world.phys.AABB(world,world).inflate(10);
+            h.assertTrue(debris.size()>=25,"Small blast creates at least 25 unique lava debris entities; actual="+debris.size());
+            h.assertTrue(debris.stream().allMatch(e->e.isAddedToLevel()&&!e.isRemoved()&&bounds.contains(e.position())),"Debris is actually added at the world position");
             h.assertTrue(l.getBlockState(p).isAir(),"Local core removed");
-            for(var e:debris)e.discard();
             var c=SubLevelContainer.getContainer(l);
             c.addForceLoadTicket(b,WorldBlast.TICKET,"test-orphan-after-restart");
             dev.draconicsable.CoreLoading.pruneOwners(l);
             h.assertTrue(c.collectForceLoadTickets().get(b).stream().noneMatch(t->t.type()==WorldBlast.TICKET),"Orphan transient ticket cleared without removing independent ticket");
-        } finally {cleanup(h,b);}
+        } finally {
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.unregister(listener);
+            for(var e:debris)e.discard();
+            cleanup(h,b);
+        }
         h.succeed();
     }
 }

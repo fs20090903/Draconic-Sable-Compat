@@ -2,7 +2,7 @@ plugins {
     id 'java-library'
     id 'net.neoforged.moddev' version '2.0.148'
 }
-version = '0.1.7'
+version = '0.1.9'
 group = 'dev.draconicsable'
 base { archivesName = 'draconic-sable-compat-1.21.1-neoforge' }
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
@@ -14,8 +14,12 @@ configurations {
 }
 dependencies {
     implementation fileTree(dir:'libs', include:'*.jar')
-    implementation files('../FlightRecorder_neoforge_1.21.1/libs/sable-2.0.5.jar', '../FlightRecorder_neoforge_1.21.1/libs/create-6.0.10.jar')
-    implementation files('../FlightRecorder_neoforge_1.21.1/libs/sable-companion-1.6.0.jar', '../FlightRecorder_neoforge_1.21.1/libs/ponder.jar')
+    // Optional local development path; release checkouts can supply these in libs.
+    if (providers.gradleProperty('localSableLibs').isPresent()) {
+        def localLibs = providers.gradleProperty('localSableLibs').get()
+        implementation files("${localLibs}/sable-2.0.5.jar", "${localLibs}/create-6.0.10.jar",
+            "${localLibs}/sable-companion-1.6.0.jar", "${localLibs}/ponder.jar")
+    }
     if (providers.gradleProperty('sodiumSmoke').isPresent()) {
         // Sodium's outer jar is a launcher service; using it as a dev mod makes
         // JarJar select the outer metadata instead of its actual implementation.
@@ -24,7 +28,7 @@ dependencies {
     }
 }
 neoForge {
-    version = '21.1.259'
+    version = providers.gradleProperty('neoVersion').getOrElse('21.1.266')
     addModdingDependenciesTo(sourceSets.gametest)
     mods {
         draconic_sable_compat { sourceSet sourceSets.main }
@@ -91,7 +95,7 @@ tasks.register('sourceDistribution', Zip) {
     from('tools') { into 'tools' }
     from('build.gradle', 'settings.gradle', 'gradle.properties', 'gradlew.bat',
         '.gitignore', 'LICENSE', 'NOTICE', 'LICENSING.md', 'DISTRIBUTION.md', 'README.md',
-        'VALIDATION.md', 'PERFORMANCE.md')
+        'VALIDATION.md', 'PERFORMANCE.md', 'LOADING_API.md')
 }
 tasks.register('generateTestStructure') {
     def dest = layout.buildDirectory.file('generated/gametest/data/draconic_sable_tests/structure/empty.nbt')

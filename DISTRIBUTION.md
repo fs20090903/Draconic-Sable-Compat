@@ -27,11 +27,11 @@ included in the source archive. The current build uses this local directory layo
 | Directory relative to project | Required filenames |
 | --- | --- |
 | `libs/` | `Draconic-Evolution-1.21.1-3.1.4.633.jar`, `BrandonsCore-1.21.1-3.2.1.309.jar`, `CodeChickenLib-1.21.1-4.6.1.529.jar` |
-| `../FlightRecorder_neoforge_1.21.1/libs/` | `sable-2.0.5.jar`, `sable-companion-1.6.0.jar`, `create-6.0.10.jar`, `ponder.jar` (Ponder 1.0.82 for Minecraft 1.21.1) |
+| `libs/` (or directory supplied with `-PlocalSableLibs=...`) | `sable-2.0.5.jar`, `sable-companion-1.6.0.jar`, `create-6.0.10.jar`, `ponder.jar` (Ponder 1.0.82 for Minecraft 1.21.1) |
 
-The sibling folder name is a development layout convention; that recorder mod's
-source or runtime installation is not required. Gradle resolves NeoForge
-21.1.259 and its development tooling. First-time setup normally needs internet
+No recorder mod source or runtime installation is required. Gradle resolves NeoForge
+21.1.266 and its development tooling; use `-PneoVersion=...` to validate another
+loader version. First-time setup normally needs internet
 access. Use `--offline` only after dependencies have been cached.
 
 ```powershell
